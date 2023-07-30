@@ -33,7 +33,7 @@ async def message(_, message):
 
     elif listed_text[0] == '!weather':
         city = listed_text[1:]
-        response = requests.get(f'http://api.openweathermap.org/geo/1.0/direct?q={city}&limit=5&appid=5d4124e4d62fdb365f2cd6b2fcf911c3')
+        response = requests.get(f'http://api.openweathermap.org/geo/1.0/direct?q={city}&limit=5&appid={your api id}')
 
         resp = response.json()
 
@@ -43,7 +43,7 @@ async def message(_, message):
                 lon = resp[0]['lon']
                 break
 
-        response = requests.get(f'https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=daily&appid=5d4124e4d62fdb365f2cd6b2fcf911c3')
+        response = requests.get(f'https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=daily&appid={your api id}')
         resp = response.json()
 
         sunrise = tm.strftime('%H:%M:%S', tm.gmtime(resp['current']['sunrise'])) + ' ☀️'
