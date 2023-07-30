@@ -1,8 +1,8 @@
 from pyrogram import Client, filters, enums
 import requests
 import datetime
-import time as tm
-import datetool
+import time as tm #this is for some errors that time variable make you can delete 'as tm' section and see the error
+import datetool 
 from datetime import timedelta
 import matplotlib.pyplot as plt
 import os 
@@ -10,11 +10,13 @@ import json
 
 app = Client('Self client bot')
 
+
 def ktc(kelvin):
     return kelvin - 273.15
 
-@app.on_message(filters.outgoing)
+@app.on_message(filters.outgoing & filters.text)
 async def message(_, message):
+    start_time = tm.time()
     chat_id = message.chat.id
     message_id = message.id
     text = message.text
@@ -257,5 +259,42 @@ async def message(_, message):
 
         await app.edit_message_text(chat_id, message_id,"%s \n\nمعنی:\n%s" % (all['result']['RHYME'], all['result']['MEANING']))
 
+    elif text == '!test':
+        await app.edit_message_text(chat_id, message_id,  "I'm steal here")
+
+    elif text == '!ping':
+        await app.edit_message_text(chat_id, message_id, '%.14f' % float((tm.time() - start_time)))
+    
+    elif listed_text[0] == '!spam':
+        await app.delete_messages(chat_id, message_id)
+
+        for counter, i in enumerate(range(int(listed_text[1]))):
+            await app.send_message(chat_id, f'{" ".join(listed_text[2:])}')
+            if counter % 10 == 0:
+                tm.sleep(1)
+
+    elif text == '!download-profiles':
+        counter = 0
+        async for photo in app.get_chat_photos(chat_id):
+            await app.download_media(photo.file_id, f'downloads/{counter}.jpg')
+            await app.send_photo(chat_id, f'downloads/{counter}.jpg')
+            os.remove(f'downloads/{counter}.jpg')
+            counter += 1
+
+    elif listed_text[0] == '!heart-wave':
+        hearts = ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎']
+        if len(listed_text) == 2: repeats = int(listed_text[1])
+        else: repeats = 10
+        for counter, i in enumerate(range(repeats)):
+            await app.edit_message_text(chat_id, message_id, ''.join(hearts))
+            heart = hearts[0]
+            hearts.pop(0)
+            hearts.append(heart)
+            tm.sleep(0.3)
+            if counter % 15 == 0: tm.sleep(1.5)
+        
+        await app.edit_message_text(chat_id, message_id, '🫀')
+
+    
 print('Bot is starting')
 app.run()
