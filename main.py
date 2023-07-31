@@ -260,7 +260,7 @@ async def message(_, message):
         await app.edit_message_text(chat_id, message_id,"%s \n\nمعنی:\n%s" % (all['result']['RHYME'], all['result']['MEANING']))
 
     elif text == '!test':
-        await app.edit_message_text(chat_id, message_id,  "I'm steal here")
+        await app.edit_message_text(chat_id, message_id,  "I'm here")
 
     elif text == '!ping':
         await app.edit_message_text(chat_id, message_id, '%.14f' % float((tm.time() - start_time)))
@@ -294,6 +294,59 @@ async def message(_, message):
             if counter % 15 == 0: tm.sleep(1.5)
         
         await app.edit_message_text(chat_id, message_id, '🫀')
+
+    elif text == '!dialogue':
+        response = requests.get('https://one-api.ir/sokhan/?token=YOUR_TOKEN')
+        resp = json.loads(response.text)
+
+        if resp['status'] == 200 and response.status_code == 200:
+            await app.edit_message_text(chat_id, message_id, f"{resp['result']['author']}:\n{resp['result']['text']}")
+
+        elif response.status_code != 200:
+            await app.edit_message_text(chat_id, message_id, resp.status_code)
+        
+        elif resp['status'] != 200:
+            await app.edit_message_text(chat_id, message_id, resp['status'])
+
+    elif text == '!general-information':
+        response = requests.get('https://one-api.ir/danestani/?token=YOUR_TOKEN')
+        resp = json.loads(response.text)
+
+        if resp['status'] == 200 and response.status_code == 200:
+            await app.edit_message_text(chat_id, message_id, f"{resp['result']['Content']}")
+
+        elif response.status_code != 200:
+            await app.edit_message_text(chat_id, message_id, resp.status_code)
+        
+        elif resp['status'] != 200:
+            await app.edit_message_text(chat_id, message_id, resp['status'])
+
+    # elif listed_text[0] == '!last-news':
+        # response = requests.get('https://one-api.ir/rss/?token=YOUR_TOKEN&action=tasnim')
+        # resp = json.loads(response.text)
+
+        # if resp['status'] == 200 and response.status_code == 200:
+        #     print(resp)
+
+        #     img_data = requests.get(resp['image']['url']).content
+        #     with open('downloads/image_name.png', 'wb') as handler:
+        #         handler.write(img_data)
+
+        #     # 
+
+        #     content = ''
+
+        #     for i in range(3):
+        #         content += f"\n\n **[{resp['item'][i]['title']}]({resp['item'][i]['link']})**\n{resp['item'][i]['description']}"
+
+
+        #     await app.send_photo(chat_id, 'downloads/image_name.png', f"[{resp['title']}]({resp['link']}){content}", reply_to_message_id = message_id)
+
+        # elif response.status_code != 200:
+        #     await app.edit_message_text(chat_id, message_id, resp.status_code)
+        
+        # elif resp['status'] != 200:
+        #     await app.edit_message_text(chat_id, message_id, resp['status'])
 
     
 print('Bot is starting')
