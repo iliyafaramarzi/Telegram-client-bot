@@ -7,6 +7,9 @@ from datetime import timedelta
 import matplotlib.pyplot as plt
 import os 
 import json
+import pandas as pd
+import random
+import csv
 
 app = Client('Self client bot')
 
@@ -14,8 +17,13 @@ app = Client('Self client bot')
 def ktc(kelvin):
     return kelvin - 273.15
 
+used_words = []
+
+names = pd.read_csv('persian-names.csv')
+
 @app.on_message(filters.outgoing & filters.text)
 async def message(_, message):
+    global used_words, names
     start_time = tm.time()
     chat_id = message.chat.id
     message_id = message.id
@@ -296,7 +304,7 @@ async def message(_, message):
         await app.edit_message_text(chat_id, message_id, '🫀')
 
     elif text == '!dialogue':
-        response = requests.get('https://one-api.ir/sokhan/?token=YOUR_TOKEN')
+        response = requests.get('https://one-api.ir/sokhan/?token=371624:64c69cdb1bc05&action=random')
         resp = json.loads(response.text)
 
         if resp['status'] == 200 and response.status_code == 200:
@@ -309,7 +317,7 @@ async def message(_, message):
             await app.edit_message_text(chat_id, message_id, resp['status'])
 
     elif text == '!general-information':
-        response = requests.get('https://one-api.ir/danestani/?token=YOUR_TOKEN')
+        response = requests.get('https://one-api.ir/danestani/?token=371624:64c69cdb1bc05')
         resp = json.loads(response.text)
 
         if resp['status'] == 200 and response.status_code == 200:
@@ -321,33 +329,90 @@ async def message(_, message):
         elif resp['status'] != 200:
             await app.edit_message_text(chat_id, message_id, resp['status'])
 
-    # elif listed_text[0] == '!last-news':
-        # response = requests.get('https://one-api.ir/rss/?token=YOUR_TOKEN&action=tasnim')
-        # resp = json.loads(response.text)
+    elif listed_text[0] == '!last-news':
+        #available news agencies: irinn, tasnim, mehr, irna, mizan, varzesh3(if you want to change the news agency you have to change all codes bcs the json of the requests are different)
+        response = requests.get(f'https://one-api.ir/rss/?token=371624:64c69cdb1bc05&action=tasnim')
+        resp = json.loads(response.text)
 
-        # if resp['status'] == 200 and response.status_code == 200:
-        #     print(resp)
+        if resp['status'] == 200 and response.status_code == 200:
+            
+            resp = resp['result']
 
-        #     img_data = requests.get(resp['image']['url']).content
-        #     with open('downloads/image_name.png', 'wb') as handler:
-        #         handler.write(img_data)
+            content = ''
 
-        #     # 
+            for i in range(3):
+                content += f"\n\n **[{resp['item'][i]['title']}]({resp['item'][i]['link']})**\n{resp['item'][i]['description']}"
 
-        #     content = ''
+            await app.send_message(chat_id, f"[{resp['title']}]({resp['link']}){content}", reply_to_message_id = message_id, disable_web_page_preview = True)
 
-        #     for i in range(3):
-        #         content += f"\n\n **[{resp['item'][i]['title']}]({resp['item'][i]['link']})**\n{resp['item'][i]['description']}"
-
-
-        #     await app.send_photo(chat_id, 'downloads/image_name.png', f"[{resp['title']}]({resp['link']}){content}", reply_to_message_id = message_id)
-
-        # elif response.status_code != 200:
-        #     await app.edit_message_text(chat_id, message_id, resp.status_code)
+        elif response.status_code != 200:
+            await app.edit_message_text(chat_id, message_id, resp.status_code)
         
-        # elif resp['status'] != 200:
-        #     await app.edit_message_text(chat_id, message_id, resp['status'])
+        elif resp['status'] != 200:
+            await app.edit_message_text(chat_id, message_id, resp['status'])
 
-    
+    elif text == '!start-names-game':
+        if used_words == []:
+            await app.send_message(chat_id, 'بازی در پیوی شما شروع شد. برای اتمام بازی از دستور !stop-names-game استفاده کنید.', reply_to_message_id = message_id)
+            
+            used_words.append(message.from_user.id)
+            used_words.append(names['name'][random.randrange(len(names))])
+            await app.send_message(message.from_user.id, used_words[-1])
+
+        else:
+            await app.send_message(chat_id, 'شخص دیگری در حال بازی کردن است لطفا منتظر بمانید', reply_to_message_id = message_id)
+                       
+
+@app.on_message(filters.private)
+async def private_messages(_, message):
+    global used_words
+    chat_id = message.chat.id
+    message_id = message.id
+    text = message.text
+
+    if used_words != []:
+        if chat_id == used_words[0]:
+            if any(names['name'] == text) and not text in used_words and text[0] == used_words[-1][-1]:
+
+                used_words.append(text)
+                word = text
+
+                while word in used_words:
+                    word = names['name'][random.randrange(len(names))]
+                    if word[0] == text[-1]:
+                        used_words.append(word)
+                        break
+                    else: word = text
+
+                await app.send_message(chat_id, word, reply_to_message_id = message_id)
+            
+            else: 
+                await app.send_message(chat_id, 'شما باختیددددد', reply_to_message_id = message_id)
+                used_words = []
+
+@app.on_message(filters.group)
+async def group(_, message):
+    global used_words, names
+    start_time = tm.time()
+    chat_id = message.chat.id
+    message_id = message.id
+    text = message.text
+    try:
+        listed_text = text.split(' ')
+    except AttributeError: pass
+
+    if text == '!start-names-game':
+        if used_words == []:
+            await app.send_message(chat_id, 'بازی در پیوی شما شروع شد. برای اتمام بازی از دستور !stop-names-game استفاده کنید.', reply_to_message_id = message_id)
+            
+            used_words.append(message.from_user.id)
+            used_words.append(names['name'][random.randrange(len(names))])
+            await app.send_message(message.from_user.id, used_words[-1])
+
+        else:
+            await app.send_message(chat_id, 'شخص دیگری در حال بازی کردن است لطفا منتظر بمانید', reply_to_message_id = message_id)
+ 
+
+
 print('Bot is starting')
 app.run()
