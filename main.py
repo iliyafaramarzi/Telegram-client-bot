@@ -334,23 +334,33 @@ async def message(_, message):
         response = requests.get(f'https://one-api.ir/rss/?token=371624:64c69cdb1bc05&action=tasnim')
         resp = json.loads(response.text)
 
-        if resp['status'] == 200 and response.status_code == 200:
-            
-            resp = resp['result']
+        page = 0
 
-            content = ''
+        if len(listed_text) == 2:
+            if int(listed_text[1]) <= 9:
+                page = int(listed_text[1])
 
-            for i in range(3):
-                content += f"\n\n **[{resp['item'][i]['title']}]({resp['item'][i]['link']})**\n{resp['item'][i]['description']}"
+                if resp['status'] == 200 and response.status_code == 200:
+                    resp = resp['result']
 
-            await app.send_message(chat_id, f"[{resp['title']}]({resp['link']}){content}", reply_to_message_id = message_id, disable_web_page_preview = True)
+                    content = ''
 
-        elif response.status_code != 200:
-            await app.edit_message_text(chat_id, message_id, resp.status_code)
+                    for i in range(page, page + 3):
+                        content += f"\n\n **[{resp['item'][i]['title']}]({resp['item'][i]['link']})**\n{resp['item'][i]['description']}"
+
+                    await app.send_message(chat_id, f"[{resp['title']}]({resp['link']}){content}", reply_to_message_id = message_id, disable_web_page_preview = True)
+
+                elif response.status_code != 200:
+                    await app.edit_message_text(chat_id, message_id, resp.status_code)
+                
+                elif resp['status'] != 200:
+                    await app.edit_message_text(chat_id, message_id, resp['status'])
+
+
+            else:
+                await app.send_message(chat_id, 'بیشتر از 9 نمیتوانید وارد کنید.')
+
         
-        elif resp['status'] != 200:
-            await app.edit_message_text(chat_id, message_id, resp['status'])
-
     elif text == '!start-names-game':
         if used_words == []:
             await app.send_message(chat_id, 'بازی در پیوی شما شروع شد. برای اتمام بازی از دستور !stop-names-game استفاده کنید.', reply_to_message_id = message_id)
@@ -361,9 +371,9 @@ async def message(_, message):
 
         else:
             await app.send_message(chat_id, 'شخص دیگری در حال بازی کردن است لطفا منتظر بمانید', reply_to_message_id = message_id)
-                       
 
-@app.on_message(filters.private)
+
+@app.on_message(filters.private & filters.text)
 async def private_messages(_, message):
     global used_words
     chat_id = message.chat.id
@@ -390,7 +400,7 @@ async def private_messages(_, message):
                 await app.send_message(chat_id, 'شما باختیددددد', reply_to_message_id = message_id)
                 used_words = []
 
-@app.on_message(filters.group)
+@app.on_message(filters.group & filters.text)
 async def group(_, message):
     global used_words, names
     start_time = tm.time()
@@ -412,7 +422,17 @@ async def group(_, message):
         else:
             await app.send_message(chat_id, 'شخص دیگری در حال بازی کردن است لطفا منتظر بمانید', reply_to_message_id = message_id)
  
+    elif listed_text[0] == '!add_new_name':
+        with open('persian-names.csv', 'a', encoding = 'utf8') as file:
+            if not any(names['name'] == ''.join(listed_text[1:])):
+                file.write(f"{len(names)},{''.join(listed_text[1:])}\n")
+                file.close()   
+                await app.send_message(chat_id, 'اسم مورد نظر با موفقیت به دیتابیس اضافه شد.', reply_to_message_id = message_id)
+            
+            else:
+                await app.send_message(chat_id, 'اسم مورد نظر قبلا در دیتابیس وجود داشت.', reply_to_message_id = message_id)
 
+        names = pd.read_csv('persian-names.csv')
 
 print('Bot is starting')
 app.run()
