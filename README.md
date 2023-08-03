@@ -1,5 +1,5 @@
 # Telegram-client-bot
-This robot has capabilities such as calendar, weather, Digital currencies prices, joke, Omen, spam(don't use it), download profile pictures, useful sentences(?), last news and names game.
+This bot is a Telegram client designed to assist you with your work, chat conversations, and even provide entertainment.
 
 ## Features
 • Calendar <br />
