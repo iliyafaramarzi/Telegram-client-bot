@@ -17,7 +17,24 @@ app = Client('Self client bot')
 def ktc(kelvin):
     return kelvin - 273.15
 
+def select_word(language : str):
+    words = []
+    with open(f'{language}-words.txt', encoding = 'utf8') as file:
+        for word in file.readlines():
+            words.append(word.strip())
+
+    return random.choice(words)
+
+def underline(word):
+    word_list = list(word)
+    for i in range(0 , (len(word) - len(word) // 3)):
+        random_number = random.randrange(0 , len(word))
+        word_list[random_number] = '-'
+
+    return ' '.join(word_list)
+
 used_words = []
+Hangman_game = {}
 
 names = pd.read_csv('persian-names.csv')
 
@@ -360,7 +377,6 @@ async def message(_, message):
             else:
                 await app.send_message(chat_id, 'بیشتر از 9 نمیتوانید وارد کنید.')
 
-        
     elif text == '!start-names-game':
         if used_words == []:
             await app.send_message(chat_id, 'بازی در پیوی شما شروع شد. برای اتمام بازی از دستور !stop-names-game استفاده کنید.', reply_to_message_id = message_id)
@@ -371,6 +387,33 @@ async def message(_, message):
 
         else:
             await app.send_message(chat_id, 'شخص دیگری در حال بازی کردن است لطفا منتظر بمانید', reply_to_message_id = message_id)
+
+    elif listed_text[0] == '!start-hangman-game':
+        if chat_id in Hangman_game.keys():
+            await app.send_message(chat_id, 'در این گروه در حال حاضر یک بازی در حال اجرا است.', reply_to_message_id = message_id)
+
+        else:
+            if listed_text[1] == 'english':
+                guess_word = select_word('english')
+                final_word = underline(guess_word)
+                await app.send_message(chat_id, final_word, reply_to_message_id = message_id)
+                Hangman_game[chat_id] = guess_word
+
+
+            elif listed_text[1] == 'persian':
+                guess_word = select_word('persian')
+                final_word = underline(guess_word)
+                await app.send_message(chat_id, final_word, reply_to_message_id = message_id)
+                Hangman_game[chat_id] = guess_word
+
+    elif chat_id in Hangman_game.keys():
+        if text == Hangman_game[chat_id]:
+            await app.send_message(chat_id, f'آفرین درست بود.\n کلمه درست {Hangman_game[chat_id]}')
+            del Hangman_game[chat_id]
+
+        if text == '!regenerate':
+            final_word = underline(Hangman_game[chat_id])
+            await app.send_message(chat_id, final_word, reply_to_message_id = message_id)
 
 
 @app.on_message(filters.private & filters.text)
@@ -402,7 +445,7 @@ async def private_messages(_, message):
 
 @app.on_message(filters.group & filters.text)
 async def group(_, message):
-    global used_words, names
+    global used_words, names, Hangman_game
     start_time = tm.time()
     chat_id = message.chat.id
     message_id = message.id
@@ -433,6 +476,29 @@ async def group(_, message):
                 await app.send_message(chat_id, 'اسم مورد نظر قبلا در دیتابیس وجود داشت.', reply_to_message_id = message_id)
 
         names = pd.read_csv('persian-names.csv')
+
+    elif listed_text[0] == '!start-hangman-game':
+        if chat_id in Hangman_game.keys():
+            await app.send_message(chat_id, 'در این گروه در حال حاضر یک بازی در حال اجرا است.', reply_to_message_id = message_id)
+
+        else:
+            if listed_text[1] == 'english':
+                guess_word = select_word('english')
+                final_word = underline(guess_word)
+                await app.send_message(chat_id, final_word, reply_to_message_id = message_id)
+                Hangman_game[chat_id] = guess_word
+
+
+            elif listed_text[1] == 'persian':
+                guess_word = select_word('persian')
+                final_word = underline(guess_word)
+                await app.send_message(chat_id, final_word, reply_to_message_id = message_id)
+                Hangman_game[chat_id] = guess_word
+
+    elif chat_id in Hangman_game.keys():
+        if text == Hangman_game[chat_id]:
+            await app.send_message(chat_id, f'آفرین درست بود.\n کلمه درست {Hangman_game[chat_id]}')
+            del Hangman_game[chat_id]
 
 print('Bot is starting')
 app.run()
