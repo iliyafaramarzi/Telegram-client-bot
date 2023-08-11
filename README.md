@@ -8,6 +8,7 @@ This bot is a Telegram client designed to assist you with your work, chat conver
 • Download profile pictures <br />
 • Last news <br />
 • Names game <br />
+• Hangman game<br />
 • Joke <br />
 • Omen <br />
 • Spam (don't use it) <br />
